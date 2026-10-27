@@ -46,7 +46,7 @@ public class PreferencesData {
     private boolean enableDoubleClickShortcut = true;
     @Getter
     @Setter
-    private int doubleClickMS = 200;
+    private int doubleClickMS = 500;
     @Getter
     @Setter
     private boolean promptOnLinks = true;

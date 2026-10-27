@@ -42,10 +42,26 @@ public class GELocale {
     }
 
     public static String translate(String key, String locale) {
+        String fallback = builtInTranslation(key, locale);
         if (LANGUAGES_MAP.containsKey(locale)) {
-            return LANGUAGES_MAP.get(locale).getOrDefault(key, key);
+            return LANGUAGES_MAP.get(locale).getOrDefault(key, fallback);
         }
-        return LANGUAGES_MAP.get("en_US").getOrDefault(key, key);
+        return LANGUAGES_MAP.getOrDefault("en_US", new HashMap<>()).getOrDefault(key, fallback);
+    }
+
+    // Downloaded language caches may predate these settings. Keep labels in the
+    // plugin so existing installations do not need to delete their language cache.
+    private static String builtInTranslation(String key, String locale) {
+        boolean japanese = locale != null && locale.toLowerCase(java.util.Locale.ROOT).startsWith("ja");
+        return switch (key) {
+            case "ge.settings.section.submit_warning" -> japanese
+                    ? "設定を保存するには、各設定画面の「送信」を押してください。"
+                    : "Press Submit on each settings screen to save your changes.";
+            case "ge.settings.menu.sendSystemToasts" -> japanese
+                    ? "システム通知を表示する"
+                    : "Show system notifications";
+            default -> key;
+        };
     }
 
     public static String translateOtherwise(String key, String otherwise, String locale) {
