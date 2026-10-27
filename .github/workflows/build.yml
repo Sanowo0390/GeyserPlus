@@ -2,16 +2,20 @@ name: Build and test
 
 on:
   push:
-    branches: ["master", "codex/**"]
   pull_request:
-    branches: ["master"]
+  workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -25,3 +29,38 @@ jobs:
         run: chmod +x ./gradlew
       - name: Test and build all plugin variants
         run: ./gradlew --no-daemon clean test shadowJar
+      - name: Upload Extension JAR
+        uses: actions/upload-artifact@v4
+        with:
+          name: GeyserPlus-Extension
+          path: extension/build/libs/GeyserPlus-Extension.jar
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload Velocity JAR
+        uses: actions/upload-artifact@v4
+        with:
+          name: GeyserPlus-Velocity
+          path: velocity/build/libs/GeyserPlus-Velocity.jar
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload Spigot JAR
+        uses: actions/upload-artifact@v4
+        with:
+          name: GeyserPlus-Spigot
+          path: spigot/build/libs/GeyserPlus-Spigot.jar
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload BungeeCord JAR
+        uses: actions/upload-artifact@v4
+        with:
+          name: GeyserPlus-BungeeCord
+          path: bungee/build/libs/GeyserPlus-BungeeCord.jar
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload Core JAR
+        uses: actions/upload-artifact@v4
+        with:
+          name: GeyserPlus-Core
+          path: core/build/libs/GeyserPlus.jar
+          if-no-files-found: error
+          retention-days: 30
