@@ -142,6 +142,40 @@ public class MenuRecoveryTest {
   }
 
   @Test
+  void floodgateFormsDoNotCrossGeyserClassLoader() throws Exception {
+    var available = dev.letsgoaway.geyserextras.core.utils.IsAvailable.class
+        .getDeclaredField("FLOODGATE");
+    available.setAccessible(true);
+    var holder = org.geysermc.floodgate.api.InstanceHolder.class.getDeclaredField("api");
+    holder.setAccessible(true);
+    var previousApi = holder.get(null);
+    boolean previousAvailable = available.getBoolean(null);
+    var previousType = dev.letsgoaway.geyserextras.ServerType.type;
+    try {
+      var api = mock(org.geysermc.floodgate.api.FloodgateApi.class);
+      holder.set(null, api);
+      available.setBoolean(null, true);
+      dev.letsgoaway.geyserextras.ServerType.type = dev.letsgoaway.geyserextras.ServerType.VELOCITY;
+      var f = new Fixture();
+      var id = UUID.randomUUID();
+      var uuid = ExtrasPlayer.class.getDeclaredField("javaUUID");
+      uuid.setAccessible(true);
+      uuid.set(f.player, id);
+      f.player.sendForm(new BedrockMenu());
+      verify(api).sendForm(eq(id), any(Form.class));
+      verify(f.session, never()).sendForm(any(Form.class));
+      check(f.player.getInventoryShortcutSuppressUntil() > 0, "Keep input debounce on Floodgate");
+      dev.letsgoaway.geyserextras.ServerType.type = dev.letsgoaway.geyserextras.ServerType.EXTENSION;
+      f.player.sendForm(new BedrockMenu());
+      verify(f.session).sendForm(any(Form.class));
+    } finally {
+      holder.set(null, previousApi);
+      available.setBoolean(null, previousAvailable);
+      dev.letsgoaway.geyserextras.ServerType.type = previousType;
+    }
+  }
+
+  @Test
   void regression() throws Exception {
     var f = new Fixture();
     f.cache.addForm(CustomForm.builder().title("server settings").build());

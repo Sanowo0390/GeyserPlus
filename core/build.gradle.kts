@@ -1,4 +1,5 @@
 dependencies {
+    testImplementation("org.geysermc.floodgate:api:2.2.5-SNAPSHOT")
     testImplementation("org.geysermc.geyser:core:2.12.1-SNAPSHOT")
     testImplementation("org.mockito:mockito-core:5.14.2")
 

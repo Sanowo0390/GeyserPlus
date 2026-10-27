@@ -17,7 +17,7 @@ import static dev.letsgoaway.geyserextras.core.GeyserExtras.GE;
 import static dev.letsgoaway.geyserextras.core.GeyserExtras.SERVER;
 
 public class PluginVersion {
-    public static final String GE_VERSION = "2.2.1";
+    public static final String GE_VERSION = "2.2.2";
 
     public static String latestVersion = "";
     public static String latestVersionModrinthID = "";

@@ -285,12 +285,16 @@ public class ExtrasPlayer {
     }
 
     private void sendGeyserForm(org.geysermc.cumulus.form.Form form) {
-        // This extension already owns the Geyser session. Queue locally instead of
-        // forwarding through Floodgate and the Java server before coming back.
+        // Platform plugins may resolve Cumulus from Floodgate's class loader.
+        // Passing that Form directly to Geyser violates loader constraints.
         session.ensureInEventLoop(() -> {
             cancelInventoryShortcut();
             inventoryShortcutSuppressUntil = TimeUnit.NANOSECONDS.toMillis(System.nanoTime()) + 300;
-            session.sendForm(form);
+            if (IsAvailable.floodgate()) {
+                org.geysermc.floodgate.api.FloodgateApi.getInstance().sendForm(javaUUID, form);
+            } else {
+                session.sendForm(form);
+            }
         });
     }
 
