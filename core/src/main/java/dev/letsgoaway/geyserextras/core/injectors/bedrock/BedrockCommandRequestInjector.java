@@ -12,6 +12,14 @@ import dev.letsgoaway.geyserextras.core.ExtrasPlayer;
 public class BedrockCommandRequestInjector extends BedrockCommandRequestTranslator {
     @Override
     public void translate(GeyserSession session, CommandRequestPacket packet) {
+        String input = packet.getCommand().trim();
+        String root = input.startsWith("/") ? input.substring(1).split("\\s+", 2)[0] : "";
+        if (root.equalsIgnoreCase("ge") || root.equalsIgnoreCase("geyserextras")) {
+            // These are now real Geyser commands. Let its command registry dispatch
+            // them instead of bypassing native argument parsing and permissions.
+            super.translate(session, packet);
+            return;
+        }
         if (CommandExecutor.isExtrasCommand(packet.getCommand())) {
             ExtrasPlayer player = ExtrasPlayer.get(session);
             CommandExecutor.runFromInput(player, packet.getCommand());

@@ -10,6 +10,7 @@ import org.cloudburstmc.protocol.bedrock.packet.ShowStoreOfferPacket;
 import org.geysermc.event.subscribe.Subscribe;
 import org.geysermc.geyser.api.connection.GeyserConnection;
 import org.geysermc.geyser.api.event.lifecycle.GeyserPostInitializeEvent;
+import org.geysermc.geyser.api.event.lifecycle.GeyserDefineCommandsEvent;
 import org.geysermc.geyser.api.extension.Extension;
 import org.geysermc.geyser.text.ChatColor;
 
@@ -24,6 +25,11 @@ public class GeyserExtrasExtension implements Extension, Server {
     public GeyserExtrasExtension() {
         ServerType.type = IsAvailable.classExists("org.geysermc.geyser.platform.standalone.GeyserStandaloneBootstrap") ? ServerType.STANDALONE : ServerType.EXTENSION;
         EXTENSION = this;
+    }
+
+    @Subscribe
+    public void onCommands(GeyserDefineCommandsEvent event) {
+        event.register(new ExtensionMenuCommand(this));
     }
 
     @Subscribe

@@ -31,9 +31,9 @@ import java.util.List;
 public class BlockDisplayEntityNew extends BlockDisplayBaseEntity implements Tickable {
     private static final DecimalFormat format = new DecimalFormat("#.###");
     private static final List<String> rendersAs2D = List.of(
-            Items.CAMPFIRE.javaIdentifier(),
-            Items.IRON_BARS.javaIdentifier(),
-            Items.BELL.javaIdentifier()
+            Items.CAMPFIRE.javaIdentifier().toString(),
+            Items.IRON_BARS.javaIdentifier().toString(),
+            Items.BELL.javaIdentifier().toString()
     );
     private String animationExpression = "";
     private Vector3f rot;
@@ -44,7 +44,12 @@ public class BlockDisplayEntityNew extends BlockDisplayBaseEntity implements Tic
         super(context);
     }
 
-    public static VanillaEntityType<BlockDisplayEntityNew> buildEntityDef() {
+    private static VanillaEntityType<BlockDisplayEntityNew> definition;
+
+    public static synchronized VanillaEntityType<BlockDisplayEntityNew> buildEntityDef() {
+        if (definition != null) {
+            return definition;
+        }
         EntityTypeBase<Entity> entityBase = EntityTypeBase.baseBuilder(Entity.class)
                 .addTranslator(MetadataTypes.BYTE, Entity::setFlags)
                 .addTranslator(MetadataTypes.INT, Entity::setAir) // Air/bubbles
@@ -74,11 +79,12 @@ public class BlockDisplayEntityNew extends BlockDisplayBaseEntity implements Tic
                 .addTranslator(null) // Glow color override
                 .build();
 
-        return VanillaEntityType.inherited(BlockDisplayEntityNew::new, displayBase)
+        return definition = VanillaEntityType.inherited(BlockDisplayEntityNew::new, displayBase)
                 .type(EntityType.BLOCK_DISPLAY)
                 .bedrockDefinition(BedrockEntityDefinition.getVanilla(Identifier.of("minecraft:fox")))
                 .addTranslator(MetadataTypes.BLOCK_STATE, BlockDisplayEntityNew::setBlock)
-                .build();
+                // Used directly by our spawn translator; never modify frozen Java registries.
+                .build(false);
     }
 
     @Override
@@ -144,7 +150,7 @@ public class BlockDisplayEntityNew extends BlockDisplayBaseEntity implements Tic
         BlockState state = BlockState.of(entityMetadata.getPrimitiveValue());
         Block block = state.block();
         Item item = block.asItem();
-        if (item.javaIdentifier().contains("_door") || item.javaIdentifier().contains("_candle")) {
+        if (item.javaIdentifier().toString().contains("_door") || item.javaIdentifier().toString().contains("_candle")) {
             setHand(Items.AIR.newItemStack(session, 1, null));
             updateMainHand();
             return;

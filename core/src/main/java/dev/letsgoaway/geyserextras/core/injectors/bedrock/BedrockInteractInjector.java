@@ -12,37 +12,67 @@ import org.geysermc.geyser.translator.protocol.bedrock.entity.player.BedrockInte
 import java.util.concurrent.TimeUnit;
 
 import static dev.letsgoaway.geyserextras.core.GeyserExtras.GE;
+import static dev.letsgoaway.geyserextras.core.GeyserExtras.SERVER;
 
 @Translator(packet = InteractPacket.class)
 public class BedrockInteractInjector extends BedrockInteractTranslator {
     @Override
     public void translate(GeyserSession session, InteractPacket packet) {
-        ExtrasPlayer player = ExtrasPlayer.get(session);
-        if (!packet.getAction().equals(InteractPacket.Action.OPEN_INVENTORY)) {
+        if (packet.getAction() != InteractPacket.Action.OPEN_INVENTORY) {
             super.translate(session, packet);
-        } else {
+            return;
+        }
+        ExtrasPlayer player = ExtrasPlayer.get(session);
+        if (player == null) {
+            super.translate(session, packet);
+            return;
+        }
+        long now = TimeUnit.NANOSECONDS.toMillis(System.nanoTime());
+        if (GE.getConfig().isDebugMode()) {
+            long previousClick = player.getLastInventoryClickTime();
+            String interval = previousClick == 0 ? "none" : Long.toString(now - previousClick);
+            SERVER.debug("Inventory shortcut: enabled=" + player.getPreferences().isEnableDoubleClickShortcut()
+                    + ", windowMs=" + player.getPreferences().getDoubleClickMS()
+                    + ", intervalMs=" + interval
+                    + ", formQueued=" + session.hasFormOpen()
+                    + ", closingInventory=" + session.isClosingInventory());
+        }
+        if (now < player.getInventoryShortcutSuppressUntil()) {
+            return;
+        }
+        if (session.hasFormOpen()) {
+            // OPEN_INVENTORY is an explicit request to leave the form/settings UI.
+            // Queued forms are not proof that the user can actually see one.
+            // In particular settings forms may remain cached after leaving settings.
+            session.closeForm();
+        }
+        {
             if ((player.getPreferences().isEnableDoubleClickShortcut() && GE.getConfig().isEnableGeyserExtrasMenu())
-                    && !(player.getSession().isSneaking() && !player.getPreferences().isDefault(Remappable.SNEAK_INVENTORY))) {
-                // Double click
-                if (player.getPreferences().getDoubleClickMS() > System.currentTimeMillis() - player.getLastInventoryClickTime()) {
-                    if (player.getDoubleClickShortcutFuture() != null && !player.getDoubleClickShortcutFuture().isCancelled() && !player.getDoubleClickShortcutFuture().isDone()) {
-                        player.getDoubleClickShortcutFuture().cancel(false);
-                        // open menu
+                    && !(session.isSneaking() && !player.getPreferences().isDefault(Remappable.SNEAK_INVENTORY))) {
+                var pending = player.getDoubleClickShortcutFuture();
+                if (pending != null && !pending.isCancelled() && !pending.isDone()) {
+                    long elapsed = now - player.getLastInventoryClickTime();
+                    if (elapsed >= 0 && elapsed <= player.getPreferences().getDoubleClickMS()) {
+                        player.cancelInventoryShortcut();
                         Action.OPEN_GE_MENU.run(player);
-                    } else {
-                        player.setLastInventoryClickTime(System.currentTimeMillis());
-                        player.setDoubleClickShortcutFuture(session.scheduleInEventLoop(() -> {
-                            player.getPreferences().runAction(Remappable.OPEN_INVENTORY);
-                        }, player.getPreferences().getDoubleClickMS() + 20, TimeUnit.MILLISECONDS));
+                        return;
                     }
-                    return;
-                } else {
-                    player.setLastInventoryClickTime(System.currentTimeMillis());
-                    player.setDoubleClickShortcutFuture(session.scheduleInEventLoop(() -> {
-                        player.getPreferences().runAction(Remappable.OPEN_INVENTORY);
-                    }, player.getPreferences().getDoubleClickMS() + 20, TimeUnit.MILLISECONDS));
-                    return;
+                    // A delayed event loop must not leave two single-click tasks.
+                    player.cancelInventoryShortcut();
+                    player.getPreferences().runAction(Remappable.OPEN_INVENTORY);
                 }
+                player.setLastInventoryClickTime(now);
+                player.setDoubleClickShortcutFuture(session.scheduleInEventLoop(() -> {
+                    player.setDoubleClickShortcutFuture(null);
+                    player.setLastInventoryClickTime(0);
+                    // A form sent through ExtrasPlayer cancels this task. Do not
+                    // silently discard input because an unrelated settings form is cached.
+                    if (session.hasFormOpen()) {
+                        session.closeForm();
+                    }
+                    player.getPreferences().runAction(Remappable.OPEN_INVENTORY);
+                }, player.getPreferences().getDoubleClickMS() + 20, TimeUnit.MILLISECONDS));
+                return;
             }
             Remappable bind = player.getSession().isSneaking() ? Remappable.SNEAK_INVENTORY : Remappable.OPEN_INVENTORY;
             if (player.getPreferences().isDefault(bind) || player.getPreferences().getAction(bind).equals(Action.OPEN_INVENTORY)) {

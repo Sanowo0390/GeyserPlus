@@ -1,3 +1,11 @@
+# Current maintenance notes
+
+- Version strings must not include server, user, or organization names. Use the normal project version (currently 2.2.1).
+- The current build targets Geyser 2.12.1 / Bedrock 26.60. The older migration notes below are historical.
+- BedrockClientData skin/cape/geometry byte arrays are already Base64-decoded; only the animation String still needs decoding.
+- Build custom block-display definitions with build(false) and instantiate them through the spawn translator; never register into frozen Java registries.
+- Register extension commands during GeyserDefineCommandsEvent so they are exported to Bedrock.
+
 # GeyserExtras 项目记忆
 
 ## 项目概述

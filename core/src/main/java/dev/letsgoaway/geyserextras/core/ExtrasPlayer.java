@@ -81,7 +81,12 @@ public class ExtrasPlayer {
     // Used for the double click menu action
     @Setter
     @Getter
-    private float lastInventoryClickTime = 0;
+    private long lastInventoryClickTime = 0;
+
+    // Only suppress inventory packets briefly after requesting our own form.
+    // FormCache.hasFormOpen also includes server settings and unsent forms.
+    @Getter
+    private long inventoryShortcutSuppressUntil = 0;
 
     // For emote chat on platforms where we cant get the dimensions of other players
     @Getter
@@ -271,28 +276,34 @@ public class ExtrasPlayer {
         session.sendUpstreamPacket(titlePacket);
     }
 
-    public void sendForm(BedrockForm form) {
-        if (IsAvailable.floodgate()) {
-            org.geysermc.floodgate.api.FloodgateApi.getInstance().getPlayer(javaUUID).sendForm(form.create(this).build());
-        } else {
-            session.sendForm(form.create(this).build());
+    public void cancelInventoryShortcut() {
+        if (doubleClickShortcutFuture != null) {
+            doubleClickShortcutFuture.cancel(false);
+            doubleClickShortcutFuture = null;
         }
+        lastInventoryClickTime = 0;
+    }
+
+    private void sendGeyserForm(org.geysermc.cumulus.form.Form form) {
+        // This extension already owns the Geyser session. Queue locally instead of
+        // forwarding through Floodgate and the Java server before coming back.
+        session.ensureInEventLoop(() -> {
+            cancelInventoryShortcut();
+            inventoryShortcutSuppressUntil = TimeUnit.NANOSECONDS.toMillis(System.nanoTime()) + 300;
+            session.sendForm(form);
+        });
+    }
+
+    public void sendForm(BedrockForm form) {
+        sendGeyserForm(form.create(this).build());
     }
 
     public void sendForm(BedrockMenu form) {
-        if (IsAvailable.floodgate()) {
-            org.geysermc.floodgate.api.FloodgateApi.getInstance().getPlayer(javaUUID).sendForm(form.create(this));
-        } else {
-            session.sendForm(form.create(this));
-        }
+        sendGeyserForm(form.create(this));
     }
 
     public void sendForm(BedrockModal form) {
-        if (IsAvailable.floodgate()) {
-            org.geysermc.floodgate.api.FloodgateApi.getInstance().getPlayer(javaUUID).sendForm(form.create(this));
-        } else {
-            session.sendForm(form.create(this));
-        }
+        sendGeyserForm(form.create(this));
     }
 
     public void setTickingState(float tickrate) {

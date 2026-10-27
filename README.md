@@ -2,7 +2,7 @@
 
 A plugin which attempts to unify features for Bedrock Edition players on Java Edition servers with [GeyserMC](https://geysermc.org), as well as other handy features for Bedrock players.
 
-> **GeyserPlus** is a community continuation of [GeyserExtras](https://github.com/GeyserExtras/GeyserExtras). The upstream repository was archived by its author on 2026-06-19 — this fork keeps the plugin maintained and up to date with recent Geyser releases (currently **Geyser 2.11.1 / Minecraft 26.x**).
+> **GeyserPlus** is a community continuation of [GeyserExtras](https://github.com/GeyserExtras/GeyserExtras). The upstream repository was archived by its author on 2026-06-19 — this fork keeps the plugin maintained and up to date with recent Geyser releases (currently **Geyser 2.12.1 / Minecraft 26.x**).
 
 [![GitHub release](https://img.shields.io/github/v/release/leemwood/GeyserPlus?logo=github)](https://github.com/leemwood/GeyserPlus/releases)
 [![Modrinth](https://img.shields.io/modrinth/v/geyserplus?logo=modrinth)](https://modrinth.com/plugin/geyserplus)
@@ -23,7 +23,7 @@ Get the latest release on [GitHub Releases](https://github.com/leemwood/GeyserPl
 
 ### Requirements
 
-- **Geyser 2.11.1** on the same server/proxy
+- **Geyser 2.12.1** on the same server/proxy
 - Java **21+** (note: Minecraft 26.x servers themselves require Java 25)
 - Velocity users: **Velocity 4.0.0+** (older Velocity ships an incompatible adventure version)
 - [Floodgate](https://geysermc.org/download#floodgate) recommended — menus and per-player settings are only available to Floodgate players
@@ -31,6 +31,12 @@ Get the latest release on [GitHub Releases](https://github.com/leemwood/GeyserPl
 ### Upgrading from GeyserExtras
 
 GeyserPlus keeps the original plugin id (`geyserextras`), commands (`/geyserextras`, `/ge`) and extension id, so existing setups keep working. Note that on Bukkit platforms the config folder follows the plugin name, so it becomes `plugins/GeyserPlus/` — copy your old `plugins/GeyserExtras/` contents over if you want to keep your settings.
+
+### Extension menu commands
+
+The extension registers `/ge`, `/ge settings`, and `/geyserextras menu` with Geyser so Bedrock can discover and execute them. The double-inventory shortcut remains available and uses each player's configured time window; it requires two inventory-open packets within that window.
+
+Version 2.2.1 targets Geyser 2.12.1 (including Bedrock 26.60 support). It handles decoded skin data directly and creates block-display definitions without modifying frozen Java registries. Compatibility with earlier Geyser internals is not guaranteed. Client-side display still needs an in-game check.
 
 ## Features
 

@@ -2,70 +2,102 @@ package dev.letsgoaway.geyserextras.core.features.skinsaver;
 
 import dev.letsgoaway.geyserextras.core.ExtrasPlayer;
 import org.geysermc.geyser.session.auth.BedrockClientData;
-import org.geysermc.geyser.util.FileUtils;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Base64;
+import java.util.Objects;
 
 import static dev.letsgoaway.geyserextras.core.GeyserExtras.SERVER;
 
 public class SkinSaver {
     public static void save(ExtrasPlayer player) {
         try {
-            // Skins
             BedrockClientData data = player.getSession().getClientData();
-            Path skinsFolder = Files.createDirectories(SERVER.getPluginFolder().resolve("skins/" + data.getSkinId().replace(data.getCapeId(), "") + "/"));
+            String capeId = Objects.requireNonNullElse(data.getCapeId(), "");
+            String skinId = Objects.requireNonNullElse(data.getSkinId(), "skin");
+            if (!capeId.isEmpty()) {
+                skinId = skinId.replace(capeId, "");
+            }
+            if (skinId.isBlank()) {
+                skinId = "skin";
+            }
+            Path skinsFolder = Files.createDirectories(SERVER.getPluginFolder().resolve("skins").resolve(skinId));
 
-            File skinFile = skinsFolder.resolve("skin.png").toFile();
-            byte[] skinBytes = Base64.getDecoder().decode(data.getSkinData());
-            ImageIO.write(getFromSkinData(data.getSkinImageWidth(), data.getSkinImageHeight(), skinBytes), "png", skinFile);
+            // Geyser 2.12.1's byte[] fields are already Base64-decoded by
+            // BedrockClientData.StringToByteDeserializer. Never decode them twice.
+            saveImage(skinsFolder.resolve("skin.png"), data.getSkinImageWidth(),
+                    data.getSkinImageHeight(), data.getSkinData(), player);
+            saveText(skinsFolder.resolve("skin.geometry.json"), data.getGeometryData(), player);
+            saveText(skinsFolder.resolve("skin.geometry_name.json"), data.getGeometryName(), player);
 
-            String geometryName = new String(Base64.getDecoder().decode(data.getGeometryName()));
-            String geometryData = new String(Base64.getDecoder().decode(data.getGeometryData()));
-
-            String rawAnimData = data.getSkinAnimationData();
-            if (!rawAnimData.isEmpty() && !rawAnimData.isBlank()) {
-                String animationData = new String(Base64.getDecoder().decode(rawAnimData.getBytes(StandardCharsets.UTF_8)));
-                if (!animationData.isEmpty() && !animationData.isBlank()) {
-                    FileUtils.writeFile(skinsFolder.resolve("skin.animation.json").toFile(), animationData.toCharArray());
+            // Animation data remains a Base64-encoded String in BedrockClientData.
+            String animation = data.getSkinAnimationData();
+            if (animation != null && !animation.isBlank()) {
+                try {
+                    saveText(skinsFolder.resolve("skin.animation.json"), Base64.getDecoder().decode(animation), player);
+                } catch (IllegalArgumentException e) {
+                    warn(player, "skin.animation.json", e);
                 }
             }
 
-
-            FileUtils.writeFile(skinsFolder.resolve("skin.geometry.json").toFile(), geometryData.toCharArray());
-            FileUtils.writeFile(skinsFolder.resolve("skin.geometry_name.json").toFile(), geometryName.toCharArray());
-            // Capes
-            if (!data.getCapeId().isEmpty()) {
-                Path capesFolder = Files.createDirectories(SERVER.getPluginFolder().resolve("capes/" + data.getCapeId() + "/"));
-                File capeFile = capesFolder.resolve("cape.png").toFile();
-
-                byte[] capeBytes = data.getCapeData();
-                ImageIO.write(getFromSkinData(data.getCapeImageWidth(), data.getCapeImageHeight(), capeBytes), "png", capeFile);
+            if (!capeId.isEmpty() && data.getCapeData() != null && data.getCapeData().length != 0) {
+                Path capesFolder = Files.createDirectories(SERVER.getPluginFolder().resolve("capes").resolve(capeId));
+                saveImage(capesFolder.resolve("cape.png"), data.getCapeImageWidth(),
+                        data.getCapeImageHeight(), data.getCapeData(), player);
             }
-
-        } catch (IOException e) {
-            SERVER.warn("Could not save skin data for player " + player.getBedrockXUID() + ", " + e.getLocalizedMessage());
+        } catch (IOException | RuntimeException e) {
+            // Skin export is optional; failure must not abort SessionJoinEvent.
+            warn(player, "skin data", e);
         }
     }
 
+    private static void saveImage(Path path, int width, int height, byte[] pixels, ExtrasPlayer player) {
+        if (pixels == null || pixels.length == 0) {
+            return;
+        }
+        try {
+            if (!ImageIO.write(getFromSkinData(width, height, pixels), "png", path.toFile())) {
+                throw new IOException("PNG writer unavailable");
+            }
+        } catch (IOException | IllegalArgumentException e) {
+            warn(player, path.getFileName().toString(), e);
+        }
+    }
+
+    private static void saveText(Path path, byte[] bytes, ExtrasPlayer player) {
+        if (bytes == null || bytes.length == 0) {
+            return;
+        }
+        try {
+            Files.writeString(path, new String(bytes, StandardCharsets.UTF_8), StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            warn(player, path.getFileName().toString(), e);
+        }
+    }
+
+    private static void warn(ExtrasPlayer player, String component, Exception error) {
+        SERVER.warn("Could not save " + component + " for player " + player.getBedrockXUID()
+                + ", " + error.getMessage());
+    }
+
     private static BufferedImage getFromSkinData(int width, int height, byte[] pixelData) {
-        BufferedImage argbImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        if (width <= 0 || height <= 0 || (long) width * height * 4 != pixelData.length) {
+            throw new IllegalArgumentException("Invalid RGBA image dimensions or pixel data length");
+        }
+        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         int[] pixels = new int[width * height];
         for (int i = 0; i < pixels.length; i++) {
-            int a = (pixelData[i * 4 + 3] & 0xFF) << 24; // Alpha
-            int r = (pixelData[i * 4] & 0xFF) << 16; // Red
-            int g = (pixelData[i * 4 + 1] & 0xFF) << 8;  // Green
-            int b = (pixelData[i * 4 + 2] & 0xFF);      // Blue
-            pixels[i] = a | r | g | b;
+            pixels[i] = ((pixelData[i * 4 + 3] & 0xFF) << 24)
+                    | ((pixelData[i * 4] & 0xFF) << 16)
+                    | ((pixelData[i * 4 + 1] & 0xFF) << 8)
+                    | (pixelData[i * 4 + 2] & 0xFF);
         }
-
-        argbImage.setRGB(0, 0, width, height, pixels, 0, width);
-        return argbImage;
+        image.setRGB(0, 0, width, height, pixels, 0, width);
+        return image;
     }
 }
