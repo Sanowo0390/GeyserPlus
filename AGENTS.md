@@ -1,6 +1,6 @@
 # Current maintenance notes
 
-- Version strings must not include server, user, or organization names. Use the normal project version (currently 2.2.4).
+- Version strings must not include server, user, or organization names. Use 2.2.0.1 for this maintenance build. Do not bump the third component for minor fixes; use the fourth component for maintenance revisions.
 - Platform plugins with Floodgate must send forms via FloodgateApi; its Cumulus classes may come from a different loader than Geyser's. Extensions use the session directly.
 - The current build targets Geyser 2.12.1 / Bedrock 26.60. The older migration notes below are historical.
 - BedrockClientData skin/cape/geometry byte arrays are already Base64-decoded; only the animation String still needs decoding.

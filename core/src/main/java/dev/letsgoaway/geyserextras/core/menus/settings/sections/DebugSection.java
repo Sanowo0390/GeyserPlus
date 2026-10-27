@@ -58,7 +58,7 @@ public class DebugSection extends Section {
         menu.add(new Label("Ping Sample: " + player.getPingSample()));
         menu.add(new Label("Ping Sample Size: " + player.getPingSampleSize()));
 
-        menu.add(new SubSectionLabel("GeyserExtras Info"));
+        menu.add(new SubSectionLabel("GeyserPlus Info"));
         menu.add(new Label("Version: " + PluginVersion.GE_VERSION));
         menu.add(new Label("Server Type: " + ServerType.get()));
         menu.add(new Label("Floodgate installed: " + (IsAvailable.floodgate() ? "Yes" : "No")));

@@ -17,11 +17,48 @@ import static dev.letsgoaway.geyserextras.core.GeyserExtras.GE;
 import static dev.letsgoaway.geyserextras.core.GeyserExtras.SERVER;
 
 public class PluginVersion {
-    public static final String GE_VERSION = "2.2.4";
+    public static final String GE_VERSION = "2.2.0.1";
 
     public static String latestVersion = "";
     public static String latestVersionModrinthID = "";
 
+    static boolean isNewerVersion(String candidate, String current) {
+        List<Integer> candidateParts = numericVersion(candidate);
+        List<Integer> currentParts = numericVersion(current);
+        if (candidateParts == null || currentParts == null) {
+            return false;
+        }
+
+        int parts = Math.max(candidateParts.size(), currentParts.size());
+        for (int i = 0; i < parts; i++) {
+            int candidatePart = i < candidateParts.size() ? candidateParts.get(i) : 0;
+            int currentPart = i < currentParts.size() ? currentParts.get(i) : 0;
+            if (candidatePart != currentPart) {
+                return candidatePart > currentPart;
+            }
+        }
+        return false;
+    }
+
+    private static List<Integer> numericVersion(String version) {
+        if (version == null || version.isBlank()) {
+            return null;
+        }
+        String numeric = version.trim().split("[-+]", 2)[0];
+        if (!numeric.matches("\\d+(?:\\.\\d+)*")) {
+            return null;
+        }
+
+        List<Integer> parts = new ArrayList<>();
+        try {
+            for (String part : numeric.split("\\.")) {
+                parts.add(Integer.parseInt(part));
+            }
+        } catch (NumberFormatException exception) {
+            return null;
+        }
+        return parts;
+    }
 
     public static boolean checkForUpdate() {
         if (!GE.getConfig().isCheckForUpdates()) {
@@ -32,7 +69,7 @@ public class PluginVersion {
             URL url = new URL("https://api.modrinth.com/v2/project/geyserplus/version");
             URLConnection request = url.openConnection();
             request.setConnectTimeout(5000);
-            request.setRequestProperty("User-Agent", "leemwood/GeyserPlus/" + GE_VERSION);
+            request.setRequestProperty("User-Agent", "RealmsNetwork/GeyserPlus/" + GE_VERSION);
             request.connect();
             JsonElement root = JsonParser.parseReader(new InputStreamReader((InputStream) request.getContent()));
 
@@ -45,7 +82,7 @@ public class PluginVersion {
                 if (loadersArray.contains(ServerType.type.name().toLowerCase()) || (ServerType.isExtension() && loadersArray.contains("geyser"))) {
                     latestVersion = version.getAsJsonObject().get("version_number").getAsString();
                     latestVersionModrinthID = version.getAsJsonObject().get("id").getAsString();
-                    return !latestVersion.equals(GE_VERSION);
+                    return isNewerVersion(latestVersion, GE_VERSION);
                 }
             }
             return false;

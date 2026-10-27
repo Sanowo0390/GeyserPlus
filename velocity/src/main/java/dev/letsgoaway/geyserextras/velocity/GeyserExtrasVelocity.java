@@ -40,8 +40,8 @@ import java.util.concurrent.ExecutorService;
 import static dev.letsgoaway.geyserextras.core.GeyserExtras.GE;
 
 @Plugin(
-        authors = "LetsGoAway",
-        name = "GeyserExtras",
+        authors = "RealmsNetwork",
+        name = "GeyserPlus",
         version = PluginVersion.GE_VERSION,
         id = "geyserextras",
         dependencies = {

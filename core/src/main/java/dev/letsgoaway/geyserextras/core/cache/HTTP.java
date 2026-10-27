@@ -14,7 +14,7 @@ public class HTTP {
         try {
             URLConnection cn = url.openConnection();
             cn.setConnectTimeout(5000);
-            cn.setRequestProperty("User-Agent", "GeyserExtras/GeyserExtras/" + GE_VERSION);
+            cn.setRequestProperty("User-Agent", "RealmsNetwork/GeyserPlus/" + GE_VERSION);
             cn.connect();
             return cn.getInputStream();
         } catch (IOException e) {

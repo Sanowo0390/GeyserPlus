@@ -17,7 +17,7 @@ public class InitializeLogger {
 
     public static void start() {
         start = Instant.now();
-        info("--------------GeyserExtras--------------");
+        info("--------------GeyserPlus--------------");
         info("Version: " + PluginVersion.GE_VERSION);
         info("Server Type: " + ServerType.get());
         info("Platform Type: " + ServerType.platform().platformName());
