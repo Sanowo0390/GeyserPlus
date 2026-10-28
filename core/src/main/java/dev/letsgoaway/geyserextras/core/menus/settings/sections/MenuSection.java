@@ -16,7 +16,7 @@ public class MenuSection extends Section {
             player.getPreferences().setEnableDoubleClickShortcut(b);
         }));
 
-        menu.add(new Slider(player.translateGE("ge.settings.menu.doubleClickTime"), 150, 1000, 10, player.getPreferences().getDoubleClickMS(),
+        menu.add(new Slider(player.translateGE("ge.settings.menu.doubleClickTime"), 0, 1000, 10, player.getPreferences().getDoubleClickMS(),
                 (i) -> {
                     player.getPreferences().setDoubleClickMS(Math.round(i));
                 }));
