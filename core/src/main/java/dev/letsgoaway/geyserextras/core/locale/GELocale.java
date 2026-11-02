@@ -42,6 +42,8 @@ public class GELocale {
     }
 
     public static String translate(String key, String locale) {
+        String hint = menuCommandHint(key, locale);
+        if (hint != null) return hint;
         String corrected = japaneseMenuTranslation(key, locale);
         if (corrected != null) return corrected;
         String fallback = builtInTranslation(key, locale);
@@ -67,6 +69,8 @@ public class GELocale {
     }
 
     public static String translateOtherwise(String key, String otherwise, String locale) {
+        String hint = menuCommandHint(key, locale);
+        if (hint != null) return hint;
         String corrected = japaneseMenuTranslation(key, locale);
         if (corrected != null) return corrected;
         if (LANGUAGES_MAP.containsKey(locale)) {
@@ -76,14 +80,26 @@ public class GELocale {
         return otherwise;
     }
 
+    // Command hints take precedence over downloaded caches that still advertise double tapping.
+    private static String menuCommandHint(String key, String locale) {
+        boolean japanese = locale != null && locale.toLowerCase(java.util.Locale.ROOT).startsWith("ja");
+        return switch (key) {
+            case "ge.welcome_toast.line2" -> japanese
+                    ? "/ge を入力してGeyserMenuを開く"
+                    : "Type /ge to open GeyserMenu";
+            case "ge.form_error_toast.line2" -> japanese
+                    ? "/ge を入力してGeyserMenuを開いてください"
+                    : "Type /ge to open GeyserMenu";
+            default -> null;
+        };
+    }
+
     // Override outdated downloaded labels, including already cached translations.
     private static String japaneseMenuTranslation(String key, String locale) {
         if (locale == null || !locale.toLowerCase(java.util.Locale.ROOT).startsWith("ja")) return null;
         return switch (key) {
-            case "ge.welcome_toast.line2", "ge.settings.menu.doubleClickInventoryShortcut" ->
+            case "ge.settings.menu.doubleClickInventoryShortcut" ->
                     "インベントリを素早く二回開いてメニューを開く";
-            case "ge.form_error_toast.line2" ->
-                    "ゲーム内でインベントリを素早く二回開いて設定メニューを開くことができます";
             case "ge.settings.menu.doubleClickTime" -> "インベントリを二回開く間隔（ミリ秒）";
             default -> null;
         };

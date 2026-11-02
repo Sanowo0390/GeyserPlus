@@ -43,10 +43,10 @@ public class PreferencesData {
     private Menus settingsMenuForm = Menus.GE_SETTINGS;
     @Getter
     @Setter
-    private boolean enableDoubleClickShortcut = true;
+    private boolean enableDoubleClickShortcut = false;
     @Getter
     @Setter
-    private int doubleClickMS = 500;
+    private int doubleClickMS = 0;
     @Getter
     @Setter
     private boolean promptOnLinks = true;

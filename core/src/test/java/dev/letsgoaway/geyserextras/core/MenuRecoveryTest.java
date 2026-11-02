@@ -176,6 +176,21 @@ public class MenuRecoveryTest {
   }
 
   @Test
+  void zeroIntervalDoesNotWaitForAnotherInventoryClick() {
+    var f = new Fixture();
+    when(f.prefs.getDoubleClickMS()).thenReturn(0);
+    when(f.prefs.getAction(Remappable.OPEN_INVENTORY)).thenReturn(Action.SWAP_OFFHAND);
+    when(f.session.getPlayerEntity())
+        .thenReturn(mock(org.geysermc.geyser.entity.type.player.SessionPlayerEntity.class));
+
+    f.tap();
+
+    check(f.tasks.isEmpty(), "Zero interval must not schedule a delayed inventory action");
+    check(f.menus.get() == 0, "Zero interval must not open the double-click menu");
+    verify(f.session).requestOffhandSwap();
+  }
+
+  @Test
   void regression() throws Exception {
     var f = new Fixture();
     f.cache.addForm(CustomForm.builder().title("server settings").build());
