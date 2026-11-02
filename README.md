@@ -34,7 +34,9 @@ GeyserPlus keeps the original plugin id (`geyserextras`), commands (`/geyserextr
 
 ### Extension menu commands
 
-The extension registers `/ge`, `/ge settings`, and `/geyserextras menu` with Geyser so Bedrock can discover and execute them. The double-inventory shortcut remains available and uses each player's configured time window; it requires two inventory-open packets within that window.
+The extension registers `/ge`, `/ge settings`, and `/geyserextras menu` with Geyser so Bedrock can discover and execute them. Welcome and menu-recovery notifications direct players to `/ge`, including installations with older language caches. The double-inventory shortcut is disabled by default and its time window defaults to 0 ms, so normal inventory input does not wait for a second click. Players can opt in by enabling the shortcut and setting a positive time window.
+
+Existing saved preferences keep their values. To apply these defaults to an existing installation, set `"enableDoubleClickShortcut": false` and `"doubleClickMS": 0` in `preferences/default.json`. Players with their own saved preferences must update the same values in `preferences/<XUID>.json`, or disable the shortcut and set its interval to 0 in the menu settings. Edit saved files while the proxy/server is stopped so a later save does not overwrite the changes. Custom `menus.text-overrides` still take precedence over notification text.
 
 Version 2.2.1 targets Geyser 2.12.1 (including Bedrock 26.60 support). It handles decoded skin data directly and creates block-display definitions without modifying frozen Java registries. Compatibility with earlier Geyser internals is not guaranteed. Client-side display still needs an in-game check.
 
@@ -53,7 +55,7 @@ Version 2.2.1 targets Geyser 2.12.1 (including Bedrock 26.60 support). It handle
 - Allows rebinding of certain actions to Java Actions (e.g. swap offhand)
 - Allows players to load resource packs from the `GeyserExtras/optionalpacks` folder as they please
 - Allows saving player skin, geometry and animation data to `GeyserExtras/skins`
-- Accessible menu by double tapping Inventory or typing `/ge`
+- Accessible menu by typing `/ge` (optional double-inventory shortcut)
 
 ## Building
 

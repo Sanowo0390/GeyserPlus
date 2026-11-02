@@ -17,8 +17,8 @@ import java.util.Map;
 // TODO make wiki page/s to explain stuff better
 public final class GeyserExtrasConfig {
     @Comment("""
-            Enable the GeyserExtras menu, which can be opened by players by
-            double-tapping inventory, or typing `/ge`.
+            Enable the GeyserExtras menu, which players can open by typing `/ge`.
+            The optional double-inventory shortcut is disabled by default (0 ms).
             \s
             The GeyserExtras Menu provides actions and configurable settings such as
             - Remapping certain actions (e.g emotes/pick block) to Java Edition only actions (e.g offhand)

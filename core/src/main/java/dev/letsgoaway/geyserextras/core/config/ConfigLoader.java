@@ -89,7 +89,7 @@ public class ConfigLoader {
             SERVER.warn("show up in the Game Settings menu due to how forms work on GeyserMC.");
             SERVER.warn("If you want a temporary work around to this, use Geyser-Standalone,");
             SERVER.warn("otherwise a notification toast will show up informing players that");
-            SERVER.warn("they will have to double tap inventory.");
+            SERVER.warn("they can type /ge to open the menu.");
         }
     }
 

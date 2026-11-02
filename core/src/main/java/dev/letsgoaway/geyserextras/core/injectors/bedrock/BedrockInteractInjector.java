@@ -48,6 +48,7 @@ public class BedrockInteractInjector extends BedrockInteractTranslator {
         }
         {
             if ((player.getPreferences().isEnableDoubleClickShortcut() && GE.getConfig().isEnableGeyserExtrasMenu())
+                    && player.getPreferences().getDoubleClickMS() > 0
                     && !(session.isSneaking() && !player.getPreferences().isDefault(Remappable.SNEAK_INVENTORY))) {
                 var pending = player.getDoubleClickShortcutFuture();
                 if (pending != null && !pending.isCancelled() && !pending.isDone()) {
